@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 scrapy = "*"
 flask = "*"
+scrapy-fake-useragent = "*"
 
 [dev-packages]
 
