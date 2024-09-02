@@ -1,0 +1,5 @@
+__author__ = "Alex Noerdemann"
+__license__ = "GNU GPL v3"
+__version__ = "0.0.0"
+__maintainer__ = "Alex Noerdemann"
+__status__ = "Development"

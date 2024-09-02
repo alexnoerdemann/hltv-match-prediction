@@ -99,3 +99,6 @@ USER_AGENT = "scrape (+http://www.google.com)"
 REQUEST_FINGERPRINTER_IMPLEMENTATION = "2.7"
 TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 FEED_EXPORT_ENCODING = "utf-8"
+
+# Custom settings of the scrape-project:
+SPIDER_ALLOWED_DOMAINS = ['hltv.org']
