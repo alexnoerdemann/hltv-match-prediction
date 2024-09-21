@@ -20,22 +20,27 @@ class MatchSpider(scrapy.Spider):
     def __parse_match_id(self, response):
         return re.search(r"\d+", response.url).group()
 
-    def __parse_event(self, response):
+    def __parse_event(self, response) -> dict:
+        output = {"name": None, "datetime": None}
         event_data = response.css(".teamsBox")
         date = event_data.css("div.date::text").get()
         time = event_data.css("div.time::text").get()
-        # Remove all whitespaces from the date.
-        date = re.sub(r"\s+", "", date)
-        # Replace all ordinal day numbers by normal day numbers.
-        date = re.sub(r"(\d)(st|nd|rd|th)", r"\1", date)
-        # Format and combine data to one datetime.
-        formatted_date = dt.strptime(date, "%dof%B%Y")
-        formatted_time = dt.strptime(time, "%H:%M")
-        formatted_datetime = dt.combine(formatted_date.date(), formatted_time.time())
-        return {
-            "name": event_data.css("div.event ::text").get(),
-            "datetime": formatted_datetime.isoformat(),
-        }
+        name = event_data.css("div.event ::text").get()
+        if None not in {date, time, name}:
+            # Remove all whitespaces from the date.
+            date = re.sub(r"\s+", "", date)
+            # Replace all ordinal day numbers by normal day numbers.
+            date = re.sub(r"(\d)(st|nd|rd|th)", r"\1", date)
+            # Format and combine data to one datetime.
+            formatted_date = dt.strptime(date, "%dof%B%Y")
+            formatted_time = dt.strptime(time, "%H:%M")
+            formatted_datetime = dt.combine(
+                formatted_date.date(), formatted_time.time()
+            )
+            output["name"] = name
+            output["datetime"] = formatted_datetime.isoformat()
+
+        return output
 
     def __parse_teams(self, response):
         lineup = response.css("div.lineup")
