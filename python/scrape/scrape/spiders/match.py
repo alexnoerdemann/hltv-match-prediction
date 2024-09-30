@@ -1,3 +1,4 @@
+import copy
 import re
 from datetime import datetime as dt
 from enum import Enum
@@ -17,10 +18,9 @@ class MatchSpider(scrapy.Spider):
             def __init__(self) -> None:
                 self.teamname: str | None = None
                 self.score: int | None = None
-                self.firsthalf: list | None = None
-                self.secondhalf: list | None = None
-                # TODO[HMP-TASK-4]: Refine how to set and get the overtime, since we expect it to be a list of lists.
-                self.overtime: list | None = None
+                self.firsthalf: list[bool] | None = None
+                self.secondhalf: list[bool] | None = None
+                self.overtime: list[list[bool]] | None = None
 
         def __init__(self) -> None:
             self.source = self.RoundHistorySource.UNKNOWN
@@ -83,9 +83,70 @@ class MatchSpider(scrapy.Spider):
         best_of = response.css(".preformatted-text::text").get()
         return int(re.search(r"\d+", best_of).group()) if best_of else None
 
-    def __parse_map_result_from_stats_link(self, link) -> dict[str, MapResult]:
-        # TODO[HMP-TASK-4]: Crawl and parse data from "stats page"
-        return {"map_result": self.MapResult()}
+    def __parse_map_result_from_stats_link(
+        self, stats_response
+    ) -> dict[str, MapResult]:
+        def parse_round_history_team_row(
+            stats_response, selector: str
+        ) -> list[list[bool]]:
+            """Parses the whole round history of the team including potential overtimes."""
+            output = list()
+            history = stats_response.css(selector).xpath("child::*")
+            history_part = list()
+            for item in history:
+                node = item.get()
+                node_type = item.xpath("name()").get()
+                if node_type == "img" and "round-history-team" not in node:
+                    # TODO[HMP-TASK-?]: We might need smarter filtering for the actual win/loss condition.
+                    history_part.append(False if "empty" in node else True)
+                elif node_type == "div":
+                    output.append(copy.deepcopy(history_part))
+                    history_part.clear()
+            else:
+                # Also append the parsed rounds to the output, which came after the last separating "div/vertical bar".
+                if history_part:
+                    output.append(copy.deepcopy(history_part))
+
+            # We have to remove list(s) from the output to get rid of wrongly parsed data (e.g. the very start with the team logos and the div/vertical bar).
+            return list(filter(lambda elem: len(elem) > 2, output))
+
+        result = self.MapResult()
+        result.source = self.MapResult.RoundHistorySource.STATS_PAGE
+        match_info_box = stats_response.css(".match-info-box *::text").getall()
+        if match_info_box:
+            try:
+                result.mapname = match_info_box[4].strip()
+                result.toppart_team_result.teamname = match_info_box[5]
+                result.toppart_team_result.score = int(match_info_box[7])
+                result.bottompart_team_result.teamname = match_info_box[10]
+                result.bottompart_team_result.score = int(match_info_box[12])
+            except IndexError:
+                # No special handling needed here, since all values are defaulted to None.
+                pass
+
+        try:
+            toppart_round_history = parse_round_history_team_row(
+                stats_response, "div.round-history-team-row:nth-child(1)"
+            )
+            result.toppart_team_result.firsthalf = toppart_round_history[0]
+            result.toppart_team_result.secondhalf = toppart_round_history[1]
+            result.toppart_team_result.overtime = toppart_round_history[2:]
+        except IndexError:
+            # No special handling needed here, since all values are defaulted to None.
+            pass
+
+        try:
+            bottompart_round_history = parse_round_history_team_row(
+                stats_response, "div.round-history-team-row:nth-child(2)"
+            )
+            result.bottompart_team_result.firsthalf = bottompart_round_history[0]
+            result.bottompart_team_result.secondhalf = bottompart_round_history[1]
+            result.bottompart_team_result.overtime = bottompart_round_history[2:]
+        except IndexError:
+            # No special handling needed here, since all values are defaulted to None.
+            pass
+
+        return {"map_result": result}
 
     def __parse_map_result_from_scoreboard(self, response) -> dict[str, MapResult]:
         # HLTV Scoreboard works as follows:
@@ -113,6 +174,7 @@ class MatchSpider(scrapy.Spider):
 
         def parse_half(response, halfselector: str) -> tuple[list[bool]]:
             def transform_half_to_round_list(half):
+                # TODO[HMP-TASK-?]: We might need smarter filtering for the actual win/loss condition.
                 return [
                     False if "empty" in round else True
                     for round in half.css("div.historyIcon img::attr(src)").getall()
