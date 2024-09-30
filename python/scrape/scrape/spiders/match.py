@@ -14,17 +14,19 @@ class MatchSpider(scrapy.Spider):
             STATS_PAGE = 2
 
         class TeamMapResult:
-            teamname: str | None = None
-            score: int | None = None
-            firsthalf: list | None = None
-            secondhalf: list | None = None
-            # TODO[HMP-TASK-4]: Refine how to set and get the overtime, since we expect it to be a list of lists.
-            overtime: list | None = None
+            def __init__(self) -> None:
+                self.teamname: str | None = None
+                self.score: int | None = None
+                self.firsthalf: list | None = None
+                self.secondhalf: list | None = None
+                # TODO[HMP-TASK-4]: Refine how to set and get the overtime, since we expect it to be a list of lists.
+                self.overtime: list | None = None
 
-        source = RoundHistorySource.UNKNOWN
-        mapname: str | None = None
-        toppart_team_result = TeamMapResult()
-        bottompart_team_result = TeamMapResult()
+        def __init__(self) -> None:
+            self.source = self.RoundHistorySource.UNKNOWN
+            self.mapname: str | None = None
+            self.toppart_team_result = self.TeamMapResult()
+            self.bottompart_team_result = self.TeamMapResult()
 
     BASE_SCRAPE_ERROR_STRING = "scrape-error"
     name = "match"
