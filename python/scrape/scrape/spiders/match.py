@@ -6,7 +6,7 @@ from enum import Enum
 import scrapy
 
 
-# TODO[HMP-TASK-4]: Add docstring(s) for everything
+# TODO[HMP-TASK-?]: Add docstring(s) for everything
 class MatchSpider(scrapy.Spider):
     class MapResult:
         class RoundHistorySource(Enum):
@@ -27,6 +27,16 @@ class MatchSpider(scrapy.Spider):
             self.mapname: str | None = None
             self.toppart_team_result = self.TeamMapResult()
             self.bottompart_team_result = self.TeamMapResult()
+
+        def to_dict(self):
+            member_dict = dict()
+            member_dict.update({"source": self.source.name})
+            member_dict.update({"mapname": self.mapname})
+            member_dict.update({"toppart_team_result": vars(self.toppart_team_result)})
+            member_dict.update(
+                {"bottompart_team_result": vars(self.bottompart_team_result)}
+            )
+            return {"map_result": member_dict}
 
     BASE_SCRAPE_ERROR_STRING = "scrape-error"
     name = "match"
@@ -146,7 +156,7 @@ class MatchSpider(scrapy.Spider):
             # No special handling needed here, since all values are defaulted to None.
             pass
 
-        return {"map_result": result}
+        return result.to_dict()
 
     def __parse_map_result_from_scoreboard(self, response) -> dict[str, MapResult]:
         # HLTV Scoreboard works as follows:
@@ -170,6 +180,13 @@ class MatchSpider(scrapy.Spider):
                 output = "".join(output).strip()
             else:
                 output = None
+            return output
+
+        def parse_score(response, selector: str) -> int | None:
+            output = response.css(selector).get()
+            if output:
+                output = int(output)
+
             return output
 
         def parse_half(response, halfselector: str) -> tuple[list[bool]]:
@@ -198,12 +215,12 @@ class MatchSpider(scrapy.Spider):
             response,
             ".ctTeamHeaderBg > tr:nth-child(1) > td:nth-child(1) > div:nth-child(1) *::text",
         )
-        result.toppart_team_result.score = response.css(".ctScore::text").get()
+        result.toppart_team_result.score = parse_score(response, ".ctScore::text")
         result.bottompart_team_result.teamname = parse_teamname(
             response,
             ".tTeamHeaderBg > tr:nth-child(1) > td:nth-child(1) > div:nth-child(1) *::text",
         )
-        result.bottompart_team_result.score = response.css(".tScore::text").get()
+        result.bottompart_team_result.score = parse_score(response, ".tScore::text")
         (
             result.toppart_team_result.firsthalf,
             result.bottompart_team_result.firsthalf,
@@ -213,7 +230,7 @@ class MatchSpider(scrapy.Spider):
             result.bottompart_team_result.secondhalf,
         ) = parse_half(response, ".secondHalf div.roundHistoryLine")
 
-        return {"map_result": result}
+        return result.to_dict()
 
     def parse(self, response):
         yield {"match_id": self.__parse_match_id(response)}
