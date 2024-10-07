@@ -1,0 +1,20 @@
+# Dependency directories
+node_modules/
+
+# Visual Studio Code settings
+.vscode
+
+# Test coverage
+coverage
+*.lcov
+
+# Optional eslint cache
+.eslintcache
+
+# Dotenv environment variables file
+.env
+.env.test
+
+# Build output
+*.vercel
+*.svelte-kit

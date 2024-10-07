@@ -4,7 +4,7 @@ from pathlib import Path
 from flask import Flask, abort, current_app, request
 from markupsafe import escape
 
-from . import cli, util
+from . import cli, common
 
 __author__ = "Alex Noerdemann"
 __license__ = "GNU GPL v3"
@@ -24,15 +24,16 @@ def create_app():
         if request.method == "POST":
             user_input = escape(request.form["match-url"])
             output_path = Path(current_app.instance_path + "/parsed_match.json")
-            util.parse_match(user_input, output_path.as_uri())
+            common.parse_match(user_input, output_path.as_uri())
             try:
                 with open(output_path) as output:
                     return json.dumps(json.load(output))
             except (json.JSONDecodeError, OSError, TypeError):
                 abort(500, "Could not parse/handle the given HLTV match.")
         else:
-            return ('<h1>Hello, HMP!</h1>'
+            return (
+                "<h1>Hello, HMP!</h1>"
                 '<form method="POST"><input name="match-url"><input type="submit"></form>'
-                )    
+            )
 
     return app
