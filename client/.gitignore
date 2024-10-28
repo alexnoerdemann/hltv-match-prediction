@@ -1,20 +1,21 @@
-# Dependency directories
-node_modules/
+node_modules
 
-# Visual Studio Code settings
-.vscode
+# Output
+.output
+.vercel
+/.svelte-kit
+/build
 
-# Test coverage
-coverage
-*.lcov
+# OS
+.DS_Store
+Thumbs.db
 
-# Optional eslint cache
-.eslintcache
-
-# Dotenv environment variables file
+# Env
 .env
-.env.test
+.env.*
+!.env.example
+!.env.test
 
-# Build output
-*.vercel
-*.svelte-kit
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
