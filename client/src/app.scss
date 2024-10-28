@@ -1,0 +1,12 @@
+/* Override global Sass variables. */
+@use "bulma/sass/utilities" with ($link: $hmp-secondary-2,
+);
+@use "bulma/sass/base" with ($body-overflow-y: auto);
+/* Import the needed components. */
+@use "bulma/sass/elements";
+@use "bulma/sass/form";
+@use "bulma/sass/components";
+@use "bulma/sass/grid";
+@use "bulma/sass/helpers";
+@use "bulma/sass/layout";
+@use "bulma/sass/themes";
