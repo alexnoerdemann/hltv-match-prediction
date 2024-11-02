@@ -1,1 +1,6 @@
-<slot></slot><script>import "../app.scss";</script>
+<script>
+    import '@fortawesome/fontawesome-free/css/all.min.css'
+    import "../app.scss";
+</script>
+
+<slot></slot>

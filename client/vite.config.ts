@@ -6,7 +6,7 @@ export default defineConfig({
 	css: {
 		preprocessorOptions: {
 			scss: {
-				additionalData: "@use \"src/_hmp.scss\" as *;"
+				additionalData: '@use "src/hmp" as *;'
 			}
 		}
 	}
